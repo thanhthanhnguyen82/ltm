@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h3>Login</h3>
+Username <input type="text" id="uname"></br>
+Password <input type="password" id="pwd"></br>
+<button id="login">Login</button>
+
+<h3>Register</h3>
+Username <input type="text" id="regis_uname"></br>
+Password <input type="password" id="regis_pwd"></br>
+<button id="register">Register</button>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    var socket = io();
+    $("#login").click(function(){
+        let uname = $("#uname").val();
+        let pwd = $("#pwd").val();
+        socket.emit('login',{'uname' : uname,'pwd' : pwd});
+    });
+
+    $("#register").click(function(){
+        let uname = $("#regis_uname").val();
+        let pwd = $("#regis_pwd").val();
+        socket.emit('signup',{'uname' : uname,'pwd' : pwd});
+    });
+
+    socket.on('login_succeed',function(data){
+        document.cookie = `token = ${data['data']['token']}`;
+        document.cookie = `id = ${data['data']['id']}`;
+        // socket.emit('move to chat room', )
+        alert(data['msg']);
+        //socket.emit('move to chat room');
+    });
+
+    socket.on('login_failed',function(data){
+       alert(data['msg']);         
+    });
+
+    socket.on('signup_success',function(data){
+        alert(data['msg']);        
+    });
+
+    socket.on('signup_failed',function(data){
+        alert(data['msg']);        
+    });
+</script>
+</body>
+</html>

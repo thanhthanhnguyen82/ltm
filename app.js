@@ -4,13 +4,23 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const shortid = require('shortid');
 const ROOM = require('./room.js');
+// Import from Nguyen
+const auth = require('./auth').auth;
+const private = require('./private');
+const User = require('./user.js').User;
+const Token = require('./user.js').Token;
 
+let user = [];
+let token = [];
 
-// Routing: 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/views/login.html');
 });
-
+//==========================================
+// Routing: 
+app.get('/chat', (req, res) => {
+    res.sendFile(__dirname + '/views/index.html');
+});
 
 const allRoomObj = {};
 const roomList = {};
@@ -23,26 +33,19 @@ const roomList = {};
  * @param {*} clientID - received from client-side
  */
 // roomID is not yet generated randomly to run tests
-const createRoom = (clientID, roomName) => {
+const createRoom = (clientId, roomName) => {
     // check if both params are passed into
-    if (typeof clientID === 'undefined' || typeof roomName === 'undefined') {
+    if (typeof clientId === 'undefined' || typeof roomName === 'undefined') {
         console.log('Error: params are not passed into the function');
     } else {
-        let roomID = shortid.generate();
-        let newRoom = new ROOM(roomID, roomName, clientID);
+        let roomId = shortid.generate();
+        let newRoom = new ROOM(roomId, roomName, clientId);
         //console.log(room1);
-        newRoom.addClient(clientID);
-        allRoomObj[roomID] = newRoom;
-        roomList[roomID] = roomName;
+        allRoomObj[roomId] = newRoom;
+        roomList[roomId] = roomName;
+        return roomId;
     }
 }
-
-console.log('check create room function');
-createRoom('fake clientID 1', 'test room 1', 'fake roomID 1');
-createRoom('fake clientID 2', 'test room 2', 'fake roomID 2');
-createRoom('fake clientID 3', 'test room 3', 'fake roomID 3');
-// createRoom('test room 2');
-console.log(allRoomObj);
 
 /**
  * Delete a room function
@@ -67,12 +70,6 @@ const deleteRoom = (clientID, roomID) => {
 
 }
 
-console.log('check delete room function');
-deleteRoom('fake clientID 2', 'fake roomID 1000');
-deleteRoom('fake clientID 2', 'fake roomID 1');
-deleteRoom('fake clientID 1', 'fake roomID 1');
-console.log(allRoomObj);
-
 /**
  * Clients join rooms function -> add clients to room
  * @param {*} clientID 
@@ -89,10 +86,6 @@ const joinRoom = (clientID, roomID) => {
     }
 }
 
-console.log('check joinRoom func');
-joinRoom('fake clientID 21', 'fake roomID 2');
-console.log(allRoomObj);
-
 /**
  * Clients leave rooms function -> remove clients from room
  * @param {*} clientID 
@@ -108,10 +101,6 @@ const leaveRoom = (clientID, roomID) => {
         room.removeClient(clientID);
     }
 }
-console.log('check leaveRoom func');
-leaveRoom();
-leaveRoom('fake clientID 21', 'fake roomID 2');
-console.log(allRoomObj);
 
 /**
  * Clients change the room's name -> only allow the room's creator to change name
@@ -139,39 +128,94 @@ const changeRoomName = (clientID, roomID, newRoomName) => {
     }
 }
 
-console.log('check changeRoomName func');
-changeRoomName('fake clientID 3', 'fake roomID 3', 'new room name 3');
-console.log(allRoomObj);
-console.log(roomList);
-
 //==============================================
 // SOCKET.IO EVENTS
 //==============================================
-const main = io.on('connection', () => {
-    /*
-    ......................
-    */
+const main = io.on('connection', (socket) => {
+    
+    io.sockets.emit('user connect', roomList, user); //roomList, userList, clientName 
 
-    socket.on('create room', (clientID, roomName) => {
-        createRoom(clientID, roomName);
-        // TODO: update room list of users
+    //=================================
+    socket.on('move to chat room', () => {
+        //
+    });
+    
+    //=================================
+    socket.on('disconnect', () => {
+        // remove the username from global usernames list
+        socket.broadcast.emit('user disconnect', socket.id);
+        console.log(socket.id + ' disconnected');
+    });
+    //===================================
+    // IMPORT FROM Nguyen
+    auth(socket, user, token);
+    // socket.on('send_private',(data)=>{
+    // 	private.send_private(socket.username,data['receiverName'],data['msg'],user,socket);
+    // 	socket.on('update_connect',(data,socket)=>{
+    // 		private.update_connect(data,user,socket);
+    // 	});
+    //});	
 
-        // emit to all clients new roomList -> update room list
-        io.sockets.emit('create room', roomList);
+    //=====================================
+
+
+    socket.on('create room', (roomName) => {
+        try {
+            // have user info -> use clienId not socket.id
+            let clientId = socket.id;
+            let newRoomId = createRoom(clientId, roomName);
+            socket.emit('new room', { newRoomId: newRoomId, newRoomName: roomList[newRoomId] });
+            io.sockets.emit('update room', roomList);
+            // console.log(allRoomObj);
+            // console.log(roomList);
+        } catch (err) {
+            console.log(err);
+            socket.emit('create room error', err);
+        }
     });
 
-    socket.on('delete room', (clientID, roomID) => {
-        deleteRoom(clientID, roomID);
-        // TODO: update room list of users
-        
-        // emit to all clients new roomList -> update room list
-        io.sockets.emit('delete room', roomList);
+    socket.on('join room', (roomId) => {
+        let clientId = socket.id;
+        joinRoom(clientId, roomId);
+        //console.log(allRoomObj[roomId]);
+        socket.emit('join room', { roomId: roomId, roomName: roomList[roomId] });
+    });
+
+    socket.on('leave room', (roomId) => {
+        let clientId = socket.id;
+        leaveRoom(clientId, roomId);
+        socket.emit('leave room', { roomId: roomId, roomName: roomList[roomId] });
+    });
+
+    socket.on('delete room', (roomId) => {
+        let roomName = roomList[roomId];
+        let clientId = socket.id;
+        try {
+            deleteRoom(clientId, roomId);
+            // emit to all clients new roomList -> update room list
+            io.sockets.emit('delete room', roomId, roomName, roomList);
+        } catch (err) {
+            console.log(err);
+            socket.emit('delete room error', err);
+        }
     })
+
+
+    // when client sends a new msg
+    socket.on('chat message', (data) => {
+        socket.broadcast.emit('chat message', { roomId: data.roomId, username: socket.id, message: data.message });
+    });
+
 })
+
+
+
+
+
 //===========================================
 // LISTEN ON PORT 3000
 //===========================================
-// http.listen(3000, () => {
-//     console.log('listening on *:3000');
-// });
+http.listen(3000, () => {
+    console.log('listening on *:3000');
+});
 

@@ -49,42 +49,8 @@ class ROOM {
         this.id = id; // room ID -> node-uuid
         this.name = name; // client set in front-end -> server receives data from front-end
         this.creator = creatorID; // client's unique ID/token
-        this.client = []; // array of clients ID 
-        this.quantity = 0;
-    }
-    //
-    addClient (clientID) {
-        this.client.push(clientID);
-        this.quantity ++;
-    }
-
-    removeClient (clientID) {
-        let clientIndex = -1;
-        for (let i = 0; i < this.client.length; i++) {
-            if (this.client[i] === clientID) {
-                clientIndex = i;
-                break;
-            }
-        }
-        this.client.splice(clientIndex, 1);
-        this.quantity --;
-    }
-
-    changeName (newRoomName) {
-        this.name = newRoomName;
-    }
-}
-
-module.exports = ROOM; 
-
-// PRIVATE CHAT ROOM CLASS
-class PRIVATEROOM {
-    constructor (id, name, creatorID) {
-        this.id = id; // room ID -> node-uuid
-        this.name = name; // client set in front-end -> server receives data from front-end
-        this.creator = creatorID; // client's unique ID/token
-        this.client = []; // array of clients ID 
-        this.quantity = 0;
+        this.client = [creatorID]; // array of clients ID 
+        this.quantity = 1;
     }
     //
     addClient (clientID) {
