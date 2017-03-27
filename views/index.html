@@ -156,7 +156,7 @@
             // when the form is submitted, the message is sent to server
             $('#main_msg_form').submit(() => {
                 let message = $('#main_m').val();
-                socket.emit('chat message', { roomKey: "main", message: message });
+                socket.emit('chat message', { roomId: "main", message: message });
                 insertMsg("main", "Me", message);
                 $('#main_m').val('').focus();
                 return false; // will not reload the page
