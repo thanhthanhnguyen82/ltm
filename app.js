@@ -36,11 +36,10 @@ const roomList = {};
 const createRoom = (clientId, roomName) => {
     // check if both params are passed into
     if (typeof clientId === 'undefined' || typeof roomName === 'undefined') {
-        console.log('Error: params are not passed into the function');
+        throw new Error('Error: params are not passed into the function');
     } else {
         let roomId = shortid.generate();
         let newRoom = new ROOM(roomId, roomName, clientId);
-        //console.log(room1);
         allRoomObj[roomId] = newRoom;
         roomList[roomId] = roomName;
         return roomId;
@@ -54,14 +53,14 @@ const createRoom = (clientId, roomName) => {
  */
 const deleteRoom = (clientID, roomID) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined') {
-        console.log('Error: params are not passed into the function');
+        throw new Error('Error: params are not passed into the function');
     } else if (allRoomObj[roomID] === undefined) {
-        console.log('Error: Room does not exist !!');
+        throw new Error('Error: Room does not exist !!');
     } else {
         // only allows the room's creator
         let roomCreator = allRoomObj[roomID].creator;
         if (clientID !== roomCreator) {
-            console.log("Error: Only the room's creator is allowed to delete it !!");
+            throw new Error("Error: Only the room's creator is allowed to delete it !!");
         } else {
             delete allRoomObj[roomID];
             delete roomList[roomID];
@@ -77,9 +76,9 @@ const deleteRoom = (clientID, roomID) => {
  */
 const joinRoom = (clientID, roomID) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined') {
-        console.log('Error: params are not passed into the function');
+        throw new Error('Error: params are not passed into the function');
     } else if (allRoomObj[roomID] === undefined) {
-        console.log('Error: Room does not exist !!');
+        throw new Error('Error: Room does not exist !!');
     } else {
         let room = allRoomObj[roomID];
         room.addClient(clientID);
@@ -93,9 +92,9 @@ const joinRoom = (clientID, roomID) => {
  */
 const leaveRoom = (clientID, roomID) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined') {
-        console.log('Error: params are not passed into the function');
+        throw new Error('Error: params are not passed into the function');
     } else if (allRoomObj[roomID] === undefined) {
-        console.log('Error: Room does not exist !!');
+        throw new Error('Error: Room does not exist !!');
     } else {
         let room = allRoomObj[roomID];
         room.removeClient(clientID);
@@ -111,16 +110,16 @@ const leaveRoom = (clientID, roomID) => {
 
 const changeRoomName = (clientID, roomID, newRoomName) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined' || typeof newRoomName === 'undefined') {
-        console.log('Error: params are not passed into the function');
+        throw new Error('Error: params are not passed into the function');
     }
     else if (allRoomObj[roomID] === undefined) {
-        console.log('Error: Room does not exist !!');
+        throw new Error('Error: Room does not exist !!');
     }
     else {
         let room = allRoomObj[roomID];
         let roomCreator = allRoomObj[roomID].creator;
         if (clientID !== roomCreator) {
-            console.log("Error: Only the room's creator is allowed to change room name !!");
+            throw new Error("Error: Only the room's creator is allowed to change room name !!");
         } else {
             room.changeName(newRoomName);
             roomList[roomID] = newRoomName;
@@ -132,84 +131,111 @@ const changeRoomName = (clientID, roomID, newRoomName) => {
 // SOCKET.IO EVENTS
 //==============================================
 const main = io.on('connection', (socket) => {
-    
-    io.sockets.emit('user connect', roomList, user); //roomList, userList, clientName 
 
     //=================================
-    socket.on('move to chat room', () => {
-        //
+    socket.on('send clientId', (id) => {
+        let clientId = id;
+        console.log('receive data');
+        // find the client info with clientId
+        let connectClient = user.find(ele => ele.id === clientId);
+        connectClient.socketId = socket.id;
+        socket.username = connectClient.username;
+        console.log(connectClient.socketId);
+        console.log(socket.id);
+        io.to(socket.id).emit('reconnect', connectClient, roomList);
+        io.sockets.emit('user connect', connectClient, roomList, user);
     });
-    
+
+
     //=================================
-    socket.on('disconnect', () => {
-        // remove the username from global usernames list
-        socket.broadcast.emit('user disconnect', socket.id);
-        console.log(socket.id + ' disconnected');
-    });
+    // socket.on('disconnect', () => {
+    //     // 
+    //     console.log(user);
+    //     let disconnectClient = user.find(ele => ele.socketId === socket.id);
+    //     socket.broadcast.emit('user disconnect', disconnectClient.username);
+    //     console.log(socket.username + ' disconnected');
+    //     console.log(user);
+    // });
     //===================================
     // IMPORT FROM Nguyen
     auth(socket, user, token);
-    // socket.on('send_private',(data)=>{
+    // socket.on('private message',(data)=>{
     // 	private.send_private(socket.username,data['receiverName'],data['msg'],user,socket);
     // 	socket.on('update_connect',(data,socket)=>{
     // 		private.update_connect(data,user,socket);
     // 	});
-    //});	
+    // });	
 
     //=====================================
 
-
-    socket.on('create room', (roomName) => {
+    socket.on('create room', (roomName, clientId) => {
         try {
-            // have user info -> use clienId not socket.id
-            let clientId = socket.id;
+            // have user info -> use clientId not socket.id
             let newRoomId = createRoom(clientId, roomName);
-            socket.emit('new room', { newRoomId: newRoomId, newRoomName: roomList[newRoomId] });
+            let client = user.find(ele => ele.id === clientId);
+            client.room.push(newRoomId);
+            // emit a msg back to the sender
+            socket.emit('new room', { clientName: socket.username, newRoomId: newRoomId, newRoomName: roomList[newRoomId] });
             io.sockets.emit('update room', roomList);
             // console.log(allRoomObj);
             // console.log(roomList);
         } catch (err) {
             console.log(err);
-            socket.emit('create room error', err);
+            socket.emit('create room error', socket.username, err);
         }
     });
 
-    socket.on('join room', (roomId) => {
-        let clientId = socket.id;
-        joinRoom(clientId, roomId);
-        //console.log(allRoomObj[roomId]);
-        socket.emit('join room', { roomId: roomId, roomName: roomList[roomId] });
+    socket.on('join room', (clientId, roomId) => {
+        // check if the client is already in the room
+        let alreadyInRoom = allRoomObj[roomId].client.some(ele => ele === clientId);
+        if (!alreadyInRoom) {
+            joinRoom(clientId, roomId);
+            let client = user.find(ele => ele.id === clientId);
+            client.room.push(roomId);
+            // emit a msg back to the sender
+            socket.emit('join room', { clientName: socket.username, roomId: roomId, roomName: roomList[roomId] });
+        } else {
+            socket.emit('join room error', "You are already in the room!");
+        }
     });
 
-    socket.on('leave room', (roomId) => {
-        let clientId = socket.id;
-        leaveRoom(clientId, roomId);
-        socket.emit('leave room', { roomId: roomId, roomName: roomList[roomId] });
+    socket.on('leave room', (clientId, roomId) => {
+        let alreadyInRoom = allRoomObj[roomId].client.some(ele => ele === clientId);
+        if (alreadyInRoom) {
+            leaveRoom(clientId, roomId);
+            let client = user.find(ele => ele.id === clientId);
+            let roomIndex = client.room.indexOf(roomId);
+            client.room.splice(roomIndex, 1);
+            // emit a msg back to the sender
+            socket.emit('leave room', { clientName: socket.username, roomId: roomId, roomName: roomList[roomId] });
+        } else {
+            socket.emit('leave room error', "You are not in the room!");
+        }
+
     });
 
-    socket.on('delete room', (roomId) => {
+    socket.on('delete room', (clientId, roomId) => {
         let roomName = roomList[roomId];
-        let clientId = socket.id;
         try {
             deleteRoom(clientId, roomId);
+            let client = user.find(ele => ele.id === clientId);
+            let roomIndex = client.room.indexOf(roomId);
+            client.room.splice(roomIndex, 1);
             // emit to all clients new roomList -> update room list
             io.sockets.emit('delete room', roomId, roomName, roomList);
         } catch (err) {
             console.log(err);
-            socket.emit('delete room error', err);
+            // emit a msg back to the sender
+            socket.emit('delete room error', err.message);
         }
     })
 
 
     // when client sends a new msg
     socket.on('chat message', (data) => {
-        socket.broadcast.emit('chat message', { roomId: data.roomId, username: socket.id, message: data.message });
+        socket.broadcast.emit('chat message', { roomId: data.roomId, username: socket.username, message: data.message });
     });
-
 })
-
-
-
 
 
 //===========================================

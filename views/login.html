@@ -33,11 +33,13 @@ Password <input type="password" id="regis_pwd"></br>
     });
 
     socket.on('login_succeed',function(data){
-        document.cookie = `token = ${data['data']['token']}`;
-        document.cookie = `id = ${data['data']['id']}`;
-        // socket.emit('move to chat room', )
+        // document.cookie = `token = ${data['data']['token']}`;
+        // document.cookie = `id = ${data['data']['id']}`;
+        localStorage.token = ` ${data['data']['token']}`;
+        localStorage.id = `${data['data']['id']}`;
         alert(data['msg']);
-        //socket.emit('move to chat room');
+        let destination = window.location.href + 'chat';
+        window.location.href = destination;
     });
 
     socket.on('login_failed',function(data){

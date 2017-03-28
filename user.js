@@ -8,6 +8,7 @@ class User {
 		this.username = usr;
 		this.password = pwd;
 		this.friend = {};
+		this.room = [];
 	}
 }
 
