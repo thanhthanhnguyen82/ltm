@@ -1,0 +1,325 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Socket.IO chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font: 16px Helvetica, Arial;
+        }
+        
+        ul {
+            list-style-type: none;
+            padding: 5px 10px;
+        }
+        
+        #user_list,
+        #room_list {
+            margin: 10px;
+            border: 2px solid black;
+        }
+        
+        #user_list div,
+        #room_list div {
+            padding: 10px;
+        }
+        
+        .chat_box {
+            margin: 10px;
+            /*width: 80%;*/
+            border: 2px solid black;
+        }
+        
+        .chat_form {
+            background: #000;
+            padding: 3px;
+            margin: 20px;
+            width: 80%;
+        }
+        
+        .chat_form input {
+            border: 0;
+            padding: 10px;
+            width: 70%;
+            margin-right: .5%;
+        }
+        
+        .chat_form button {
+            width: 29%;
+            background: rgb(16, 48, 141);
+            border: none;
+            padding: 10px;
+        }
+        
+        .private_div {
+            width: 100%;
+            min-height: 150px;
+            border: 1px solid black;
+            position: relative;
+        }
+        
+        .input_div {
+            position: absolute;
+            bottom: 0;
+        }
+        
+        .input_div input {
+            border: 1px solid black;
+            padding: 10px;
+            /*display:inline-block;*/
+            width: 400px;
+        }
+        
+        .input_div button {
+            width: 29%;
+            background: rgb(130, 224, 255);
+            border: 1px solid black;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="room_list">
+        <b>ROOMS</b>
+        <div id="room"></div>
+        <form id="room_form" action="">
+            <input type="text" name="message" id="room_name" placeholder="enter room name..." autocomplete="off" /><button>CREATE ROOM</button>
+        </form>
+    </div>
+
+    <div id="user_list">
+        <b>USERS</b>
+        <div id="user"></div>
+    </div>
+
+    <div class="container">
+        <div class="chat_box" id="main_box">
+            <ul id="main_msg"></ul>
+            <form class="chat_form" id="main_msg_form" action="">
+                <input type="text" name="message" id="main_m" autocomplete="off" /><button>Send</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="container_private">
+
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script>
+        $(function () {
+            // connect to socket.io
+            const socket = io();
+
+            let clientId = localStorage.getItem("id");
+            socket.emit('send clientId', clientId);
+            // new client is requested to register an username
+            socket.on('connect', () => {
+                // display in browser's title and on pages
+                $('#main_msg').append(`<li> You connected!</li>`);
+            })
+
+            socket.on('user connect', (connectClient, roomList, user) => {
+                updateRoomList(roomList);
+                updateUserList(user);
+                socket.emit('join default room', clientId);
+                $("#main_msg").append(`<li> ${connectClient.username} connected to the chat room </li>`);
+            })
+
+            socket.on('reconnect', (connectClient, roomList) => {
+                console.log('reconnect');
+                connectClient.room.forEach(roomId => createChatBox(roomId, roomList[roomId]));
+            })
+
+            socket.on('user disconnect', (clientName) => {
+                $("#main_msg").append(`<li> ${clientName} disconnected from the chat room </li>`);
+            })
+
+            //============================
+            socket.on('update_connect', function (data) {
+                socket.emit('update_connect', data);
+            });
+            //============================
+
+            // listener, 'create room' -> make a new chat box for the newly created room
+            socket.on('new room', (data) => {
+                createChatBox(data.newRoomId, data.newRoomName);
+                $(`#${data.newRoomId}_msg`).append(`<li><em> ${data.clientName} </em> created ${data.newRoomName}!</li>`);
+            })
+            // listener, display an error msg when cannot create room
+            socket.on('create room error', (clientName, err) => {
+                $('#main_msg').append(`<li><em> ${clientName} </em> cannot created a new room!. ${err}</li>`);
+            })
+
+            // listener, whenever the server emits 'update room', this updates the room list
+            socket.on('update room', (roomList) => {
+                updateRoomList(roomList);
+            })
+
+            // listener, 'join room' -> make a new chat box for the newly joined user
+            socket.on('join room', (data) => {
+                createChatBox(data.roomId, data.roomName);
+                $(`#${data.roomId}_msg`).append(`<li><em> ${data.clientName} </em> joined ${data.roomName}!</li>`);
+            })
+            // listener, display an error msg when cannot join room
+            socket.on('join room error', (err) => {
+                $('#main_msg').append(`<li><strong> ${err} </strong></li>`);
+            })
+            // listener, 'leave room' -> remove the chat box when leave a room
+            socket.on('leave room', (data) => {
+                $(`#${data.roomId}_box`).remove();
+                $(`#main_msg`).append(`<li><em> ${data.clientName} </em> leaved ${data.roomName}!</li>`);
+            })
+            // listener, display an error msg when cannot leave room
+            socket.on('leave room error', (err) => {
+                $('#main_msg').append(`<li><strong> ${err} </strong></li>`);
+            })
+            // listener, 'delete room' -> completely remove the chat room and update room list of all users
+            socket.on('delete room', (roomId, roomName, roomList) => {
+                $(`#${roomId}_box`).remove();
+                updateRoomList(roomList);
+                $('#main_msg').append(`<li><em> ${roomName} </em> is deleted !</li>`);
+            })
+            // listener, display an error msg when cannot delete room
+            socket.on('delete room error', (err) => {
+                $('#main_msg').append(`<li><strong> ${err} </strong></li>`);
+            })
+            // receive the data sent back from server and display on page
+            socket.on('chat message', (data) => {
+                insertMsg(data.roomId, data.username, data.message);
+            })
+
+            // listener, when a new room is created by submitting room form -> send data to the server 
+            $('#room_form').submit(() => {
+                let roomName = $('#room_name').val();
+                //let chatter = $('#name').val();
+                socket.emit('create room', roomName, clientId); //when have user info, send clientId as well
+                $('#room_name').val('');
+                return false; // will not reload the page
+            })
+
+            // listener, when a new msg is sent by submitting msg form -> send msg to the server 
+            $('#main_msg_form').submit(() => {
+                let message = $('#main_m').val();
+                socket.emit('chat message', { roomId: "main", message: message });
+                insertMsg("main", "Me", message);
+                $('#main_m').val('').focus();
+                return false; // will not reload the page
+            })
+
+            // update room function
+            const updateRoomList = (roomList) => {
+                $('#room').empty();
+                $.each(roomList, (roomId, roomName) => {
+                    $('#room').append(`<div id = ${roomId}> ${roomName} </div>`);
+
+                    $(`#${roomId}`).append(`<button id = join_${roomId}>JOIN</button>`);
+                    $(`#join_${roomId}`).click(() => {
+                        socket.emit('join room', clientId, roomId);
+                    });
+
+                    $(`#${roomId}`).append(`<button id = leave_${roomId}>LEAVE</button>`);
+                    $(`#leave_${roomId}`).click(() => {
+                        socket.emit('leave room', clientId, roomId);
+                    });
+
+                    $(`#${roomId}`).append(`<button id = delete_${roomId}>DELETE</button>`);
+                    $(`#delete_${roomId}`).click(() => {
+                        socket.emit('delete room', clientId, roomId);
+                    });
+                });
+            }
+
+            // update user list 
+            const updateUserList = (user) => {
+                $('#user').empty();
+                $.each(user, (index, value) => {
+                    $('#user').append(`<div id = ${value.id}> ${value.username} </div>`);
+                    $(`#${value.id}`).append(`<button id = private_msg_${value.id}>CHAT</button>`);
+                    $(`#private_msg_${value.id}`).click(() => {
+                        //======== nguyen code
+                        let senderId = localStorage.getItem("id");
+                        let pid = senderId + value.id;
+                        let div = create_private_div(value.username, pid);
+                        $("#container_private").append(div);
+                        console.log(value.username);
+                        $( `#btn_${value.username}`).click(() => {
+                            sendPrivate(value.username);
+                        });
+                    });
+                    // $(`#${value.id}`).dblclick(() => {
+                    //     //======== nguyen code
+                    //     let senderId = localStorage.getItem("id");
+                    //     let pid = senderId + value.id;
+                    //     let div = create_private_div(value.username, pid);
+                    //     $("#container_private").append(div);
+                    //     console.log(value.username);
+                    //     $( `#btn_${value.username}`).click(() => {
+                    //         sendPrivate(value.username);
+                    //     });
+                    // })
+                });
+            }
+            //=========================
+            function create_private_div(username, pid) {
+                let div = `<div class="private_div" id="div_${pid}">
+                                <h4>To : ${username}</h4>
+                                <div class="input_div">
+                                    <input type="text" id="input_${username}"/>
+                                    <button class="btn_private" id="btn_${username}" data-username="${username}">Send</button>
+                                </div>
+                           </div>`;
+                return div;
+            }
+            //===================
+
+            function sendPrivate(username) {
+                let msg = $("#input_" + username).val();
+                let uid = localStorage.getItem("id");
+                socket.emit('private', { 'to': username, 'uid': uid, 'msg': msg });
+            }
+
+            socket.on('get_private_msg', function (data) {
+                console.log('check connect');
+                if (!$("#div_" + data['pid']).length) {
+                    let div = create_private_div(data['sender'], data['pid']);
+                    $("#container_private").append(div);
+                    $("#btn_" + data['sender']).click(() => {
+                        sendPrivate(data['sender']);
+                    });
+                }
+                let text = `<p>${data['sender']} : ${data['msg']}</p>`;
+                $("#div_" + data['pid']).append(text);
+            });
+            //==========================END
+
+            // when a new room is created -> create a new chat box div
+            const createChatBox = (roomId, roomName) => {
+                $('.container').append(`<div id=${roomId}_box class="chat_box"> <strong> ${roomName} </strong> <ul id="${roomId}_msg"></ul> <form class="chat_form" id = "${roomId}_msg_form" action="">
+            <input type="text" name="message" id="${roomId}_m" autocomplete="off" /><button>Send</button></form> </div>`);
+                // add submit msg event to new chat box
+                $(`#${roomId}_msg_form`).submit(() => {
+                    let message = $(`#${roomId}_m`).val();
+                    socket.emit('chat message', { roomId: roomId, message: message });
+                    insertMsg(roomId, "Me", message);
+                    $(`#${roomId}_m`).val('').focus();
+                    return false; // will not reload the page
+                });
+            }
+            // insert messages on pages
+            const insertMsg = (roomId, username, message) => {
+                $(`#${roomId}_msg`).append(`<li><strong class="username">${username}</strong> : ${message}</li>`);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -13,10 +13,12 @@ function check_connect_exist(reiceiverId,listPrivate){
 	}
 }
 
-function send_private( uname , pid , msg ){
+function send_private( sender, receiver , pid , msg, io ){
 	io.to(pid).emit('get_private_msg',{
-		'sender' : uname,
-		'msg' : msg
+		'sender' : sender,
+		'receiver' : receiver,
+		'msg' : msg,
+		'pid' : pid
 	});
 }
 
@@ -24,7 +26,7 @@ function con_private(u1,u2,socket){
 	let id1 = u1['id'];
 	let id2 = u2['id'];
 	let pid = id1 + id2;
-	u1['privates'][id2] = pid;
+	u1['friend'][id2] = pid;
 	socket.join(pid);
 	socket.broadcast.to(id2).emit('update_connect',{
 		'reiceverName' : u2['username'],
@@ -34,19 +36,19 @@ function con_private(u1,u2,socket){
 }
 
 // run
-function private(senderName,receiverName,msg,list,socket){
+function private(senderName,receiverName,msg,list,socket,io){
 	let sender = getUser(senderName,list);
 	let receiver = getUser(receiverName,list);
-	let pid = check_connect_exist(receiver['id'],sender['privates']);
+	let pid = check_connect_exist(receiver['id'],sender['friend']);
 	if (!pid){
         con_private(sender,receiver,socket);
 	}
-    send_private(senderName,pid,msg);
+    send_private(senderName,receiverName,pid,msg,io);
 }
 
 function update_connect(data,list,socket){
     let user = getUser(data['reiceverName'],list);
-    user['privates'][data['senderId']] = data['pid'];
+    user['friend'][data['senderId']] = data['pid'];
     socket.join(data['pid']);
 }
 

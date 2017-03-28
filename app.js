@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 //==========================================
 // Routing: 
 app.get('/chat', (req, res) => {
-    res.sendFile(__dirname + '/views/index.html');
+    res.sendFile(__dirname + '/views/index2.html');
 });
 
 const allRoomObj = {};
@@ -159,12 +159,30 @@ const main = io.on('connection', (socket) => {
     //===================================
     // IMPORT FROM Nguyen
     auth(socket, user, token);
-    // socket.on('private message',(data)=>{
-    // 	private.send_private(socket.username,data['receiverName'],data['msg'],user,socket);
-    // 	socket.on('update_connect',(data,socket)=>{
-    // 		private.update_connect(data,user,socket);
-    // 	});
-    // });	
+    //======================ADDING FUNCTION
+    function getUsername(uid) {
+        let un = '';
+        user.forEach((u) => {
+            if (u['id'] === uid) un = u['username'];
+        });
+        return un;
+    }
+    socket.on('private', (data) => {
+        let senderName = getUsername(data['uid']);
+        // socket.username = senderName;
+        let from = senderName;
+        let to = data['to'];
+        let msg = data['msg'];
+        private.send_private(from, to, msg, user, socket, io);
+    });
+
+    socket.on('update_connect', (data) => {
+        private.update_connect(data, user, socket);
+    });
+
+    socket.on('join default room', (uid) => {
+        socket.join(uid);
+    });
 
     //=====================================
 
