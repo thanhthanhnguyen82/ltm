@@ -16,7 +16,6 @@
         quantity: integer,
         clients: array [client1, client2,...]
     }
-    const allRooms = [room1, room2, ....]
     // hoặc lưu tất cả các room vào object 
     const allRooms = {
         room1 : {...},
