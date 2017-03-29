@@ -1,4 +1,10 @@
 # CHAT APPLICATION WITH SOCKET.IO
+
+#### Collaborate with Nguyen and Dat
+* Nguyen: register, authentication, login and private chat
+* Dat: public room and fix bugs
+* Linh: public room, private chat and set up socket.io events 
+
 #### Clone the git folder and run command: 
 ```js
     npm i
