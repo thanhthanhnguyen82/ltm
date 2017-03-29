@@ -6,21 +6,14 @@ function Room(id, name, creatorID) {
     this.creator = creatorID; // client's unique ID/token
     this.client = []; // array of clients ID 
     this.quantity = 0;
-    // this.limit = 10;
-    // this.status = "available";
-    // this.private = false;
 };
 
 // addClient when a new client joins the room
 Room.prototype.addClient = function (clientID) {
-    //   if (this.status === "available") {
-    //     this.client.push(clientID);
-    //   }
     this.client.push(clientID);
     this.quantity ++;
 };
 // removeClient when a client leaves the room
-
 Room.prototype.removeClient = function (clientID) {
     let clientIndex = -1;
     for (let i = 0; i < this.client.length; i++) {
@@ -32,15 +25,7 @@ Room.prototype.removeClient = function (clientID) {
     this.client.splice(clientIndex, 1);
     this.quantity --;
 };
-/*
-Room.prototype.isAvailable = function() {
-  return this.available === "available";
-};
 
-Room.prototype.isPrivate = function() {
-  return this.private;
-};
-*/
 
 // ES6 CLASS
 // PUBLIC CHAT ROOM CLASS

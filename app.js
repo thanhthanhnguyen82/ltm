@@ -4,9 +4,9 @@ const http = require('http').Server(app);
 const io = require('socket.io')(http);
 const shortid = require('shortid');
 const ROOM = require('./room.js');
+const PrivateRoom = require('./private_room.js');
 // Import from Nguyen
 const auth = require('./auth').auth;
-const private = require('./private');
 const User = require('./user.js').User;
 const Token = require('./user.js').Token;
 
@@ -19,11 +19,12 @@ app.get('/', (req, res) => {
 //==========================================
 // Routing: 
 app.get('/chat', (req, res) => {
-    res.sendFile(__dirname + '/views/index2.html');
+    res.sendFile(__dirname + '/views/index.html');
 });
 
 const allRoomObj = {};
 const roomList = {};
+const allPrivateRoom = {};
 //==============================================
 // ROOM FUNCTIONS
 //==============================================
@@ -66,7 +67,6 @@ const deleteRoom = (clientID, roomID) => {
             delete roomList[roomID];
         }
     }
-
 }
 
 /**
@@ -127,26 +127,38 @@ const changeRoomName = (clientID, roomID, newRoomName) => {
     }
 }
 
+//=============================================
+// PRIVATE ROOM FUNCTIONS
+//=============================================
+const createPrivateRoom = (senderId, receiverId, senderName, receiverName) => {
+    // check if both params are passed into
+    if (typeof senderId === 'undefined' || typeof receiverId === 'undefined' || typeof senderName === 'undefined' || typeof receiverName === 'undefined') {
+        throw new Error('Error: params are not passed into the function');
+    } else {
+        let newPrivateRoom = new PrivateRoom(senderId, receiverId, senderName, receiverName);
+        newPrivateRoom.addClient(receiverId);
+        let roomId = newPrivateRoom.id;
+        console.log(roomId);
+        allPrivateRoom[roomId] = newPrivateRoom;
+        return roomId;
+    }
+}
+
 //==============================================
 // SOCKET.IO EVENTS
 //==============================================
 const main = io.on('connection', (socket) => {
 
-    //=================================
+    // receive clientId when an user logins
     socket.on('send clientId', (id) => {
         let clientId = id;
-        console.log('receive data');
         // find the client info with clientId
         let connectClient = user.find(ele => ele.id === clientId);
         connectClient.socketId = socket.id;
         socket.username = connectClient.username;
-        console.log(connectClient.socketId);
-        console.log(socket.id);
         io.to(socket.id).emit('reconnect', connectClient, roomList);
         io.sockets.emit('user connect', connectClient, roomList, user);
     });
-
-
     //=================================
     // socket.on('disconnect', () => {
     //     // 
@@ -156,36 +168,54 @@ const main = io.on('connection', (socket) => {
     //     console.log(socket.username + ' disconnected');
     //     console.log(user);
     // });
+
     //===================================
     // IMPORT FROM Nguyen
     auth(socket, user, token);
-    //======================ADDING FUNCTION
-    function getUsername(uid) {
-        let un = '';
-        user.forEach((u) => {
-            if (u['id'] === uid) un = u['username'];
-        });
-        return un;
-    }
-    socket.on('private', (data) => {
-        let senderName = getUsername(data['uid']);
-        // socket.username = senderName;
-        let from = senderName;
-        let to = data['to'];
-        let msg = data['msg'];
-        private.send_private(from, to, msg, user, socket, io);
-    });
+    //===================================
+    // Handle private msg events
+    //===================================
+    socket.on('send private', (senderId, receiverId) => {
+        // get sender and receiver data in user array
+        let sender = user.find(ele => ele.id === senderId);
+        let receiver = user.find(ele => ele.id === receiverId);
+        // get the obj contains private chat rooms of the sender
+        let senderFriend = sender.friend;
+        // check if a room is already created between these two users 
+        if (senderFriend.hasOwnProperty(receiverId)) {
+            let roomId = senderFriend[receiverId];
+            let roomName = allPrivateRoom[roomId].name; 
+            // send back the roomId, roomName, senderName, receiverName to sender -> create chat room in front send
+            socket.emit('create private chat', roomId, roomName, sender.username, receiver.username);
+        } else {
+            // create a new private room
+            let newRoomId = createPrivateRoom(senderId, receiverId, sender.username, receiver.username);
+            console.log('newRoomId: ' + newRoomId);
+            let newRoomName = allPrivateRoom[newRoomId].name; 
+            // update friend list of both users
+            sender.friend[receiverId] = newRoomId;
+            receiver.friend[senderId] = newRoomId;
+            // send back the roomId, roomName, senderName, receiverName to sender -> create chat room in front send
+            socket.emit('create private chat', newRoomId, newRoomName, sender.username, receiver.username);
+        }
+    })
+    // when an user wants to send a private msg -> find receiver -> emit msg and create a chat box in receiver window
+    socket.on('private message', (data) => {
+        // find sender in user array by socketId
+        let sender = user.find(ele => ele.socketId === socket.id);
+        // get senderId
+        let senderId = sender.id;
+        // from roomId -> get receiverId
+        let receiverId = data.roomId.split('--').find(ele => ele !== senderId);
+        // get socket.id of receiver to emit msg 
+        let receiverSocketId = user.find(ele => ele.id === receiverId).socketId;
+        let roomName = allPrivateRoom[data.roomId].name;
+        socket.broadcast.to(receiverSocketId).emit('private message', { roomId: data.roomId, roomName: roomName, username: sender.username, message: data.message })
+    })
 
-    socket.on('update_connect', (data) => {
-        private.update_connect(data, user, socket);
-    });
-
-    socket.on('join default room', (uid) => {
-        socket.join(uid);
-    });
-
-    //=====================================
-
+    //======================================================
+    // Handle public room events: join, leave, create, delete
+    //=======================================================
     socket.on('create room', (roomName, clientId) => {
         try {
             // have user info -> use clientId not socket.id
@@ -195,8 +225,6 @@ const main = io.on('connection', (socket) => {
             // emit a msg back to the sender
             socket.emit('new room', { clientName: socket.username, newRoomId: newRoomId, newRoomName: roomList[newRoomId] });
             io.sockets.emit('update room', roomList);
-            // console.log(allRoomObj);
-            // console.log(roomList);
         } catch (err) {
             console.log(err);
             socket.emit('create room error', socket.username, err);
@@ -206,7 +234,7 @@ const main = io.on('connection', (socket) => {
     socket.on('join room', (clientId, roomId) => {
         // check if the client is already in the room
         let alreadyInRoom = allRoomObj[roomId].client.some(ele => ele === clientId);
-        if (!alreadyInRoom) {
+        if (!alreadyInRoom) { 
             joinRoom(clientId, roomId);
             let client = user.find(ele => ele.id === clientId);
             client.room.push(roomId);
@@ -248,8 +276,9 @@ const main = io.on('connection', (socket) => {
         }
     })
 
-
-    // when client sends a new msg
+    //================================================
+    // Handle chat msg events -> broadcast to the room
+    //================================================
     socket.on('chat message', (data) => {
         socket.broadcast.emit('chat message', { roomId: data.roomId, username: socket.username, message: data.message });
     });

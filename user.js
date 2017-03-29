@@ -8,7 +8,7 @@ class User {
 		this.username = usr;
 		this.password = pwd;
 		this.friend = {};
-		this.room = [];
+		this.room = []; // all public rooms they are in
 	}
 }
 
