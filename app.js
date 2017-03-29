@@ -154,6 +154,7 @@ const main = io.on('connection', (socket) => {
         let clientId = id;
         // find the client info with clientId
         let connectClient = user.find(ele => ele.id === clientId);
+        // store the current socket.id in the user obj to be used for private msg
         connectClient.socketId = socket.id;
         socket.username = connectClient.username;
         io.to(socket.id).emit('reconnect', connectClient, roomList);
@@ -210,6 +211,7 @@ const main = io.on('connection', (socket) => {
         // get socket.id of receiver to emit msg 
         let receiverSocketId = user.find(ele => ele.id === receiverId).socketId;
         let roomName = allPrivateRoom[data.roomId].name;
+        // only emit msg to the receiver via receiverSocketId
         socket.broadcast.to(receiverSocketId).emit('private message', { roomId: data.roomId, roomName: roomName, username: sender.username, message: data.message })
     })
 

@@ -23,23 +23,21 @@
 * allPrivateRoom = {}: stores all private room objects
 ```js
     allPrivateRoom = {
-        privateRoomId: {/*room obj instance of class PrivateRoom */},
+        privateRoomId: {/*room object instance of class PrivateRoom */},
         privateRoomId1: {...},
         ...
     }
 ```
-* user = []:
+* user = []: each element in the array is user object instance of class User
 
-* token = []: 
+* token = []: each element in the array is user object instance of class Token
 
 ## REGISTER/ LOGIN: new users can register username and password. After logging in successful 
 * Register
 
-* Authenticate
+* Authenticate: all functions and socket.io events relating to authentications are written in **auth.js** and then imported in **app.js**
 
-* Login
-
-* Redirect to chat room by window.location.href -> connect to index.html -> send clientId to server
+* Login success -> Redirect to chat room by window.location.href -> connect to index.html -> send clientId to server
 
 ## PUBLIC ROOM CHAT: Each public room is an instance of class ROOM in **room.js**
 
@@ -67,6 +65,10 @@
 * A client connects to index.html -> emit clientId to server ('send clientId' event) -> server send back room and user list for clients to update in client-side ('user connect' event)
 * If a client reloads the page, their existing rooms are kept (no database so no chat history, only room box)
 * Clients can create new public chat room (by submit room form) -> emit 'create room' event to server -> server creates new public room instance -> emit back new room data to client ('new room' event) to create new chat box and update room list in client-side, if error ('create room error' event). Similarly, join, leave, delete room events follow the same logic.
-
-* Send private messages to another client by click on 'chat' button in user list
-* Emit to server the senderId and receiverId ('send private' event) -> server checks if private room betw  
+ 
+* PRIVATE CHAT
+1. Send private messages to another client by click on 'chat' button in user list
+2. Emit to server the senderId and receiverId ('send private' event) 
+3. Server checks if private room between these two clients exists -> if exits -> send back that room data to sender ('create private chat' event)-> create private chat box in client-side
+4. If no room exists -> create a private room -> update sender and receiver's friend property -> send back that room data to sender ('create private chat' event)-> create private chat box in client-side
+5. When the sender submits a msg -> emit 'private message' event to server-> server identifies senderId, receiverId and gets the current socketId of receiver -> only emit 'private message' to the receiver 

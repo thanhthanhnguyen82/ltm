@@ -4,10 +4,10 @@
 
 class User {
 	constructor(id, usr, pwd){
-		this.id = id;
+		this.id = id; // unique id stays the same for one account regardless of socket.id
 		this.username = usr;
 		this.password = pwd;
-		this.friend = {};
+		this.friend = {}; // each key-value pair is friendId: privateRoomId, stores all private rooms that the user joins
 		this.room = []; // all public rooms they are in
 	}
 }
