@@ -1,4 +1,11 @@
 # CHAT APPLICATION WITH SOCKET.IO
+#### Clone the git folder and run command: 
+```js
+    npm i
+    npm start
+    // Go to localhost:3000
+```
+
  Register an account -> Login with the account -> Enter chat room 
 
 ## STORE DATA IN SERVER VIA ARRAYS AND OBJECTS:
@@ -69,6 +76,13 @@
 * PRIVATE CHAT
 1. Send private messages to another client by click on 'chat' button in user list
 2. Emit to server the senderId and receiverId ('send private' event) 
-3. Server checks if private room between these two clients exists -> if exits -> send back that room data to sender ('create private chat' event)-> create private chat box in client-side
+3. Server checks if private room between these two clients exists -> if exits -> send back that room data to sender ('create private chat' event)-> create private chat box in client-side of the sender
 4. If no room exists -> create a private room -> update sender and receiver's friend property -> send back that room data to sender ('create private chat' event)-> create private chat box in client-side
 5. When the sender submits a msg -> emit 'private message' event to server-> server identifies senderId, receiverId and gets the current socketId of receiver -> only emit 'private message' to the receiver 
+6. Receiver receives 'private message' event -> if a chat box is not yet created in client-side -> create private chat box in client-side of the receiver -> display the message in the chat box
+
+## IDEAS TO IMPROVE THE APP:
+* Better CSS: improve responsiveness, overflow of long message
+* Hide and Show room chat in client-side: e.g. Each chat box has a close buttton -> clicking on it will hides the chat box. Clicking on the public room name will show the box again 
+* Spam detection and prevention 
+* Disconnection events: users logs out
