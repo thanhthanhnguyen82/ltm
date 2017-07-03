@@ -9,64 +9,64 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font: 16px Helvetica, Arial;
         }
-        
+
         ul {
             list-style-type: none;
             padding: 5px 10px;
         }
-        
+
         li {
             overflow-wrap: break-word;
             word-break: break-word;
         }
-        
+
         #user_list,
         #room_list {
             margin: 10px;
             border: 2px solid black;
         }
-        
+
         #user_list div,
         #room_list div {
             padding: 10px;
         }
-        
+
         .chat_box {
             margin: 10px;
             /*width: 80%;*/
             border: 2px solid black;
         }
-        
+
         .chat_form {
             background: #000;
             padding: 3px;
             margin: 20px;
             width: 80%;
         }
-        
+
         .chat_form input {
             border: 0;
             padding: 10px;
             width: 70%;
             margin-right: .5%;
         }
-        
+
         .chat_form button {
             width: 29%;
             background: rgb(16, 48, 141);
             border: none;
             padding: 10px;
         }
-        
+
         .private_box {
             margin: 10px;
             border: 2px solid deepskyblue;
         }
-        
+
         .private_form button {
             background: deepskyblue;
         }
@@ -107,7 +107,7 @@
             // connect to socket.io
             const socket = io();
             //===================================
-            // after redirecting from login page -> get clientId and send to serveer
+            // after redirecting from login page -> get clientId and send to server
             let clientId = localStorage.getItem("id");
             socket.emit('send clientId', clientId);
 
@@ -134,17 +134,20 @@
             // create a the room chat when a new room is created
             socket.on('new room', (data) => {
                 createChatBox(data.newRoomId, data.newRoomName);
-                $(`#${data.newRoomId}_msg`).append(`<li><em> ${data.clientName} </em> created ${data.newRoomName}!</li>`);
+                $(`#${data.newRoomId}_msg`).append(
+                    `<li><em> ${data.clientName} </em> created ${data.newRoomName}!</li>`);
             })
 
             socket.on('create room error', (clientName, err) => {
-                $('#main_msg').append(`<li><em> ${clientName} </em> cannot created a new room!. ${err}</li>`);
+                $('#main_msg').append(
+                    `<li><em> ${clientName} </em> cannot created a new room!. ${err}</li>`);
             })
 
             // add a new room when an user joins
             socket.on('join room', (data) => {
                 createChatBox(data.roomId, data.roomName);
-                $(`#${data.roomId}_msg`).append(`<li><em> ${data.clientName} </em> joined ${data.roomName}!</li>`);
+                $(`#${data.roomId}_msg`).append(
+                    `<li><em> ${data.clientName} </em> joined ${data.roomName}!</li>`);
             })
 
             socket.on('join room error', (err) => {
@@ -188,7 +191,9 @@
                 // check if the room div exist in html -> 0 = not exist, 1 = exist
                 if ($(`#${roomId}_box`).length === 0) {
                     createPrivateChat(roomId, roomName);
-                    $(`#${roomId}_msg`).append(`<li><em> ${senderName} </em> wants to send a private msg to ${receiverName}!</li>`);
+                    $(`#${roomId}_msg`).append(
+                        `<li><em> ${senderName} </em> wants to send a private msg to ${receiverName}!</li>`
+                    );
                 }
             })
 
@@ -213,7 +218,10 @@
             // when the form is submitted, the message is sent to server
             $('#main_msg_form').submit(() => {
                 let message = $('#main_m').val();
-                socket.emit('chat message', { roomId: "main", message: message });
+                socket.emit('chat message', {
+                    roomId: "main",
+                    message: message
+                });
                 insertMsg("main", "Me", message);
                 $('#main_m').val('').focus();
                 return false; // will not reload the page
@@ -255,12 +263,17 @@
             }
             // when a new room is created -> create a new chat box div
             const createPrivateChat = (roomId, roomName) => {
-                $('.private_container').append(`<div id=${roomId}_box class="private_box"> <strong> ${roomName} </strong> <ul id="${roomId}_msg"></ul> <form class="chat_form private_form"  id = "${roomId}_msg_form" action="">
-            <input type="text" name="message" id="${roomId}_m" autocomplete="off" /><button>Send</button></form> </div>`);
+                $('.private_container').append(
+                    `<div id=${roomId}_box class="private_box"> <strong> ${roomName} </strong> <ul id="${roomId}_msg"></ul> <form class="chat_form private_form"  id = "${roomId}_msg_form" action="">
+            <input type="text" name="message" id="${roomId}_m" autocomplete="off" /><button>Send</button></form> </div>`
+                );
                 // add submit msg event to new chat box
                 $(`#${roomId}_msg_form`).submit(() => {
                     let message = $(`#${roomId}_m`).val();
-                    socket.emit('private message', { roomId: roomId, message: message });
+                    socket.emit('private message', {
+                        roomId: roomId,
+                        message: message
+                    });
                     insertMsg(roomId, "Me", message);
                     $(`#${roomId}_m`).val('').focus();
                     return false; // will not reload the page
@@ -268,12 +281,17 @@
             }
             // when a new room is created -> create a new chat box div
             const createChatBox = (roomId, roomName) => {
-                $('.container').append(`<div id=${roomId}_box class="chat_box"> <strong> ${roomName} </strong> <ul id="${roomId}_msg"></ul> <form class="chat_form" id = "${roomId}_msg_form" action="">
-            <input type="text" name="message" id="${roomId}_m" autocomplete="off" /><button>Send</button></form> </div>`);
+                $('.container').append(
+                    `<div id=${roomId}_box class="chat_box"> <strong> ${roomName} </strong> <ul id="${roomId}_msg"></ul> <form class="chat_form" id = "${roomId}_msg_form" action="">
+            <input type="text" name="message" id="${roomId}_m" autocomplete="off" /><button>Send</button></form> </div>`
+                );
                 // add submit msg event to new chat box
                 $(`#${roomId}_msg_form`).submit(() => {
                     let message = $(`#${roomId}_m`).val();
-                    socket.emit('chat message', { roomId: roomId, message: message });
+                    socket.emit('chat message', {
+                        roomId: roomId,
+                        message: message
+                    });
                     insertMsg(roomId, "Me", message);
                     $(`#${roomId}_m`).val('').focus();
                     return false; // will not reload the page
@@ -281,7 +299,8 @@
             }
             // insert messages on pages
             const insertMsg = (roomId, username, message) => {
-                $(`#${roomId}_msg`).append(`<li><strong class="username">${username}</strong> : ${message}</li>`);
+                $(`#${roomId}_msg`).append(
+                    `<li><strong class="username">${username}</strong> : ${message}</li>`);
             }
         });
     </script>
