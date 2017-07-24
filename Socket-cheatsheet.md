@@ -47,8 +47,4 @@ io.in(roomId).clients(function (error, clients) {
   }
 });
 ```
-
-### Update on 23/07/2017
-#### Room messages error: send messages to all clients not just the clients in the destination room
-* Use `socket.join('room')` and `socket.leave('room')` to accurately join and leave rooms -> joined sockets subscribe to listen to the room
-* On event `socket.on('chat message')`, now use `socket.broadcast.to(data.roomId).emit('chat message', {...}` to only send messages to the room's clients 
+ 
