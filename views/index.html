@@ -181,6 +181,7 @@
             })
             // receive the data sent back from server and display on page
             socket.on('chat message', (data) => {
+                console.log(data);
                 insertMsg(data.roomId, data.username, data.message);
             })
 

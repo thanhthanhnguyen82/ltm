@@ -111,11 +111,9 @@ const leaveRoom = (clientID, roomID) => {
 const changeRoomName = (clientID, roomID, newRoomName) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined' || typeof newRoomName === 'undefined') {
         throw new Error('Error: params are not passed into the function');
-    }
-    else if (allRoomObj[roomID] === undefined) {
+    } else if (allRoomObj[roomID] === undefined) {
         throw new Error('Error: Room does not exist !!');
-    }
-    else {
+    } else {
         let room = allRoomObj[roomID];
         let roomCreator = allRoomObj[roomID].creator;
         if (clientID !== roomCreator) {
@@ -151,6 +149,10 @@ const main = io.on('connection', (socket) => {
 
     // receive clientId when an user logins
     socket.on('send clientId', (id) => {
+        // new code to fix room msg events
+        // default join 'main' room
+        socket.join('main')
+        //============================
         let clientId = id;
         // find the client info with clientId
         let connectClient = user.find(ele => ele.id === clientId);
@@ -185,14 +187,14 @@ const main = io.on('connection', (socket) => {
         // check if a room is already created between these two users 
         if (senderFriend.hasOwnProperty(receiverId)) {
             let roomId = senderFriend[receiverId];
-            let roomName = allPrivateRoom[roomId].name; 
+            let roomName = allPrivateRoom[roomId].name;
             // send back the roomId, roomName, senderName, receiverName to sender -> create chat room in front send
             socket.emit('create private chat', roomId, roomName, sender.username, receiver.username);
         } else {
             // create a new private room
             let newRoomId = createPrivateRoom(senderId, receiverId, sender.username, receiver.username);
             console.log('newRoomId: ' + newRoomId);
-            let newRoomName = allPrivateRoom[newRoomId].name; 
+            let newRoomName = allPrivateRoom[newRoomId].name;
             // update friend list of both users
             sender.friend[receiverId] = newRoomId;
             receiver.friend[senderId] = newRoomId;
@@ -212,7 +214,12 @@ const main = io.on('connection', (socket) => {
         let receiverSocketId = user.find(ele => ele.id === receiverId).socketId;
         let roomName = allPrivateRoom[data.roomId].name;
         // only emit msg to the receiver via receiverSocketId
-        socket.broadcast.to(receiverSocketId).emit('private message', { roomId: data.roomId, roomName: roomName, username: sender.username, message: data.message })
+        socket.broadcast.to(receiverSocketId).emit('private message', {
+            roomId: data.roomId,
+            roomName: roomName,
+            username: sender.username,
+            message: data.message
+        })
     })
 
     //======================================================
@@ -225,8 +232,17 @@ const main = io.on('connection', (socket) => {
             let client = user.find(ele => ele.id === clientId);
             client.room.push(newRoomId);
             // emit a msg back to the sender
-            socket.emit('new room', { clientName: socket.username, newRoomId: newRoomId, newRoomName: roomList[newRoomId] });
+            socket.emit('new room', {
+                clientName: socket.username,
+                newRoomId: newRoomId,
+                newRoomName: roomList[newRoomId]
+            });
             io.sockets.emit('update room', roomList);
+            // new code to fix room msg events -> join newly created room
+            socket.join(newRoomId)
+            console.log(socket.room);
+            console.log(io.sockets.adapter.rooms[newRoomId]);
+            //============================
         } catch (err) {
             console.log(err);
             socket.emit('create room error', socket.username, err);
@@ -236,12 +252,21 @@ const main = io.on('connection', (socket) => {
     socket.on('join room', (clientId, roomId) => {
         // check if the client is already in the room
         let alreadyInRoom = allRoomObj[roomId].client.some(ele => ele === clientId);
-        if (!alreadyInRoom) { 
+        if (!alreadyInRoom) {
             joinRoom(clientId, roomId);
             let client = user.find(ele => ele.id === clientId);
             client.room.push(roomId);
+            // new code to fix room msg events -> join room
+            // console.log(io.sockets.adapter.rooms[roomId]);
+            socket.join(roomId)
+            // console.log(io.sockets.adapter.rooms[roomId]);
+            //============================
             // emit a msg back to the sender
-            socket.emit('join room', { clientName: socket.username, roomId: roomId, roomName: roomList[roomId] });
+            socket.emit('join room', {
+                clientName: socket.username,
+                roomId: roomId,
+                roomName: roomList[roomId]
+            });
         } else {
             socket.emit('join room error', "You are already in the room!");
         }
@@ -254,8 +279,17 @@ const main = io.on('connection', (socket) => {
             let client = user.find(ele => ele.id === clientId);
             let roomIndex = client.room.indexOf(roomId);
             client.room.splice(roomIndex, 1);
+            // new code to fix room msg events -> leave room
+            // console.log(io.sockets.adapter.rooms[roomId]);;
+            socket.leave(roomId)
+            // console.log(io.sockets.adapter.rooms[roomId]);;
+            //============================
             // emit a msg back to the sender
-            socket.emit('leave room', { clientName: socket.username, roomId: roomId, roomName: roomList[roomId] });
+            socket.emit('leave room', {
+                clientName: socket.username,
+                roomId: roomId,
+                roomName: roomList[roomId]
+            });
         } else {
             socket.emit('leave room error', "You are not in the room!");
         }
@@ -269,6 +303,22 @@ const main = io.on('connection', (socket) => {
             let client = user.find(ele => ele.id === clientId);
             let roomIndex = client.room.indexOf(roomId);
             client.room.splice(roomIndex, 1);
+            // new code to fix room msg events -> delete room
+            // console.log(io.sockets.adapter.rooms[roomId]);
+            // remove all clients from the room
+            // get array of all clients in 'roomId'
+            io.in(roomId).clients(function (error, clients) {
+                if (clients.length > 0) {
+                    console.log('clients in the room: ');
+                    console.log(clients);
+                    clients.forEach(function (socket_id) {
+                        // clients leave room
+                        io.sockets.sockets[socket_id].leave(roomId);
+                    });
+                }
+            });
+            // console.log(io.sockets.adapter.rooms[roomId]);
+            //============================
             // emit to all clients new roomList -> update room list
             io.sockets.emit('delete room', roomId, roomName, roomList);
         } catch (err) {
@@ -282,7 +332,12 @@ const main = io.on('connection', (socket) => {
     // Handle chat msg events -> broadcast to the room
     //================================================
     socket.on('chat message', (data) => {
-        socket.broadcast.emit('chat message', { roomId: data.roomId, username: socket.username, message: data.message });
+        // emit msg to clients in the room only
+        socket.broadcast.to(data.roomId).emit('chat message', {
+            roomId: data.roomId,
+            username: socket.username,
+            message: data.message
+        });
     });
 })
 
@@ -293,4 +348,3 @@ const main = io.on('connection', (socket) => {
 http.listen(3000, () => {
     console.log('listening on *:3000');
 });
-
