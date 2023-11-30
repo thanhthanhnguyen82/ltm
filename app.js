@@ -9,9 +9,17 @@ const PrivateRoom = require('./private_room.js');
 const auth = require('./auth').auth;
 const User = require('./user.js').User;
 const Token = require('./user.js').Token;
-
+const mongoose = require('mongoose');
 let user = [];
 let token = [];
+
+mongoose
+  .connect("mongodb+srv://phuocnin26:phuoc0915130377@cluster0.japhopg.mongodb.net/ltm", {
+    useNewUrlParser: true,
+    useCreateIndex: true,
+    useFindAndModify: false
+  })
+  .then(() => console.log('DB connection successful!'));
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/views/login.html');
