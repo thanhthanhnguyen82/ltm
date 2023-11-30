@@ -15,7 +15,7 @@ class PrivateRoom {
             this.client.push(clientID);
             this.quantity++;
         } else {
-            throw new Error('You cannot join this room. This is a private room between two users.')
+            throw new Error('Bạn không thể tham gia phòng này. Đây là phòng riêng giữa hai người dùng.')
         }
 
     }

@@ -61,7 +61,7 @@ const deleteRoom = (clientID, roomID) => {
         // only allows the room's creator
         let roomCreator = allRoomObj[roomID].creator;
         if (clientID !== roomCreator) {
-            throw new Error("Error: Only the room's creator is allowed to delete it !!");
+            throw new Error("Error: Chỉ người tạo phòng mới được phép xóa nó !!");
         } else {
             delete allRoomObj[roomID];
             delete roomList[roomID];
@@ -78,7 +78,7 @@ const joinRoom = (clientID, roomID) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined') {
         throw new Error('Error: params are not passed into the function');
     } else if (allRoomObj[roomID] === undefined) {
-        throw new Error('Error: Room does not exist !!');
+        throw new Error('Error: Phòng không tồn tại !!');
     } else {
         let room = allRoomObj[roomID];
         room.addClient(clientID);
@@ -94,7 +94,7 @@ const leaveRoom = (clientID, roomID) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined') {
         throw new Error('Error: params are not passed into the function');
     } else if (allRoomObj[roomID] === undefined) {
-        throw new Error('Error: Room does not exist !!');
+        throw new Error('Error: Phòng không tồn tại !!');
     } else {
         let room = allRoomObj[roomID];
         room.removeClient(clientID);
@@ -112,12 +112,12 @@ const changeRoomName = (clientID, roomID, newRoomName) => {
     if (typeof clientID === 'undefined' || typeof roomID === 'undefined' || typeof newRoomName === 'undefined') {
         throw new Error('Error: params are not passed into the function');
     } else if (allRoomObj[roomID] === undefined) {
-        throw new Error('Error: Room does not exist !!');
+        throw new Error('Error: Phòng không tồn tại !!');
     } else {
         let room = allRoomObj[roomID];
         let roomCreator = allRoomObj[roomID].creator;
         if (clientID !== roomCreator) {
-            throw new Error("Error: Only the room's creator is allowed to change room name !!");
+            throw new Error("Error: Chỉ người tạo phòng mới được phép thay đổi tên phòng !!");
         } else {
             room.changeName(newRoomName);
             roomList[roomID] = newRoomName;
@@ -245,7 +245,7 @@ const main = io.on('connection', (socket) => {
             //============================
         } catch (err) {
             console.log(err);
-            socket.emit('create room error', socket.username, err);
+            socket.emit('Tạo phòng lỗi', socket.username, err);
         }
     });
 
@@ -268,7 +268,7 @@ const main = io.on('connection', (socket) => {
                 roomName: roomList[roomId]
             });
         } else {
-            socket.emit('join room error', "You are already in the room!");
+            socket.emit('vào phòng lỗi', "Bạn đã ở trong phòng rồi!");
         }
     });
 
@@ -291,12 +291,12 @@ const main = io.on('connection', (socket) => {
                 roomName: roomList[roomId]
             });
         } else {
-            socket.emit('leave room error', "You are not in the room!");
+            socket.emit('Rời phòng lỗi', "bạn không ở trong phòng!");
         }
 
     });
 
-    socket.on('delete room', (clientId, roomId) => {
+    socket.on('Xóa phòng', (clientId, roomId) => {
         let roomName = roomList[roomId];
         try {
             deleteRoom(clientId, roomId);
@@ -324,7 +324,7 @@ const main = io.on('connection', (socket) => {
         } catch (err) {
             console.log(err);
             // emit a msg back to the sender
-            socket.emit('delete room error', err.message);
+            socket.emit('Xóa phòng lõi', err.message);
         }
     })
 
