@@ -1,3 +1,5 @@
+// auth.js
+
 const shortid = require("shortid");
 const User = require("./user.js").User;
 const Token = require("./user.js").Token;
@@ -27,9 +29,9 @@ function auth(socket, users, tokens) {
     for (let i = 0; i < n; i++) {
       if (list[i]["username"] === uname) {
         if (list[i]["isActive"] === true) return true;
-      } // tk dang dc login
+      }
     }
-    return false; // tk chưa login
+    return false;
   }
 
   function Register(uname, pwd, list) {
@@ -59,57 +61,74 @@ function auth(socket, users, tokens) {
     } else return false;
   }
 
-  // function Logout(token, lists) {
-  //   // Lọc danh sách token để tìm token cần đăng xuất
-  //   let indexToken = tokens.findIndex((t) => t.token === token);
+  function Logout(userId, tokens) {
+    const userTokenIndex = tokens.findIndex((token) => token.userId === userId);
 
-  //   if (indexToken !== -1) {
-  //     // Xóa token khỏi danh sách tokens
-  //     tokens.splice(indexToken, 1);
-  //     lists[tokens.id]["isActive"] = false;
-  //     return true;
-  //   } else {
-  //     return false; // Token không hợp lệ hoặc đã được đăng xuất trước đó
-  //   }
-  // }
+    if (userTokenIndex !== -1) {
+      const userToken = tokens[userTokenIndex];
+      const roomId = userToken.userId;
 
-  socket.on("signup", (data) => {
+      tokens.splice(userTokenIndex, 1);
+
+      socket.leave(roomId);
+      socket.to(roomId).emit('user disconnect', socket.username);
+
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  socket.on('signup', (data) => {
     let stat = Register(data["uname"], data["pwd"], users);
     if (stat)
-      socket.emit("signup_success", {
-        msg: "Register succeed",
+      socket.emit('signup_success', {
+        msg: 'Register succeed',
       });
     else
-      socket.emit("signup_failed", {
-        msg: "Register failed",
+      socket.emit('signup_failed', {
+        msg: 'Register failed',
       });
   });
 
-  socket.on("login", (data) => {
+  socket.on('login', (data) => {
     let temp = Login(data["uname"], data["pwd"], users);
     if (temp)
-      socket.emit("login_succeed", {
-        msg: "Login succeed",
+      socket.emit('login_succeed', {
+        msg: 'Login succeed',
         data: temp,
       });
     else
-      socket.emit("login_failed", {
-        msg: "Login failed,please check your username, password or your accout was actived",
+      socket.emit('login_failed', {
+        msg: 'Login failed, please check your username, password, or your account was already active',
       });
   });
-  // socket.on("logout", () => {
-  //   let temp = Logout(tokens, users);
 
-  //   if (stat)
-  //     socket.emit("logout_success", {
-  //       msg: "logout succeed",
-  //       data: temp,
-  //     });
-  //   else
-  //     socket.emit("logout_failed", {
-  //       msg: "logout failed",
-  //     });
-  // });
+  socket.on('logout', () => {
+    const userId = getUserIdBySocket(socket, users);
+    const logoutResult = Logout(userId, tokens);
+
+    if (logoutResult) {
+      socket.emit('logout_success', {
+        msg: 'Logout succeed',
+      });
+    } else {
+      socket.emit('logout_failed', {
+        msg: 'Logout failed',
+      });
+    }
+  });
+
+  function getUserIdBySocket(socket, users) {
+    const username = socket.username;
+    const user = users.find((user) => user.username === username);
+
+    if (user) {
+      return user.id;
+    } else {
+      return null;
+    }
+  }
 }
 
 exports.auth = auth;

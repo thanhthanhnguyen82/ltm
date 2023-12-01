@@ -3,29 +3,46 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Title</title>
+    <title>Login and Registration</title>
     <style>
       body {
         font-family: "Arial", sans-serif;
-        margin: 20px;
-        padding: 20px;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
         background-color: #f4f4f4;
+      }
+
+      .container {
+        background-color: #fff;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+        padding: 20px;
+        width: 300px;
+        text-align: center;
       }
 
       h3 {
         color: #333;
+        margin-bottom: 20px;
       }
 
       label {
         display: block;
         margin-bottom: 5px;
+        text-align: left;
       }
 
       input {
         padding: 8px;
-        margin-bottom: 10px;
-        width: 200px;
+        margin-bottom: 15px;
+        width: 100%;
         box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 3px;
       }
 
       button {
@@ -45,21 +62,51 @@
         margin: 20px 0;
         border: 1px solid #ddd;
       }
+
+      .switch-page {
+        margin-top: 15px;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .switch-page a {
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      .switch-page a:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
 
   <body>
-    <h3>Login</h3>
-    <label for="uname">Tên</label> <input type="text" id="uname" /><br />
-    <label for="pwd">Mật khẩu</label> <input type="password" id="pwd" /><br />
-    <button id="login">Đăng nhập</button>
-    <hr />
-    <h3>Register</h3>
-    <label for="regis_uname">Tên</label
-    ><input type="text" id="regis_uname" /><br />
-    <label for="regis_pwd">Mật khẩu</label
-    ><input type="password" id="regis_pwd" /><br />
-    <button id="register">Đăng ký</button>
+    <div class="container" id="login-container">
+      <h3>Login</h3>
+      <label for="uname">Username</label>
+      <input type="text" id="uname" />
+      <label for="pwd">Password</label>
+      <input type="password" id="pwd" />
+      <button id="login">Log In</button>
+      <hr />
+      <div class="switch-page">
+        Don't have an account? <a href="#" id="switch-to-register">Register</a>
+      </div>
+    </div>
+
+    <div class="container" id="register-container" style="display: none;">
+      <h3>Register</h3>
+      <label for="regis_uname">Username</label>
+      <input type="text" id="regis_uname" />
+      <label for="regis_pwd">Password</label>
+      <input type="password" id="regis_pwd" />
+      <button id="register">Register</button>
+      <hr />
+      <div class="switch-page">
+        Already have an account? <a href="#" id="switch-to-login">Log In</a>
+      </div>
+    </div>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -84,12 +131,22 @@
           });
         });
 
+        $("#switch-to-register").click(function () {
+          $("#login-container").hide();
+          $("#register-container").show();
+        });
+
+        $("#switch-to-login").click(function () {
+          $("#register-container").hide();
+          $("#login-container").show();
+        });
+
         socket.on("login_succeed", function (data) {
           localStorage.setItem("token", data["data"]["token"]);
           localStorage.setItem("id", data["data"]["id"]);
           alert(data["msg"]);
           let destination = window.location.href + "chat"; // đường dẫn đến trang chat
-          window.location.href = destination; // chuyển hướng đường dẫn đến destination
+         window.location.href = '/chat'; // chuyển hướng đường dẫn đến destination
         });
 
         socket.on("login_failed", function (data) {
