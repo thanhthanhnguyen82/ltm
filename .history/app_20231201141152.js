@@ -172,11 +172,9 @@ const createPrivateRoom = (senderId, receiverId, senderName, receiverName) => {
 //==============================================
 const main = io.on("connection", (socket) => {
   // logout
-  socket.on("logout", () => {
-    socket.emit("logout_success", {
-      msg: "Do you want to log out?",
-    });
-  });
+  socket.on("logout", ()=>{
+    socket.emit("logout succeed",msg: "logout succeeded",);
+  })
   // receive clientId when an user logins
   socket.on("send clientId", (id) => {
     // new code to fix room msg events

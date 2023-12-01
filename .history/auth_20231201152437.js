@@ -15,7 +15,6 @@ function auth(socket, users, tokens) {
     let n = list.length;
     for (let i = 0; i < n; i++) {
       if (list[i]["username"] === name && list[i]["password"] === pwd) {
-        list[i]["isActive"] = true;
         return list[i]["id"];
       }
     }
@@ -44,11 +43,11 @@ function auth(socket, users, tokens) {
   }
 
   function Login(uname, pwd, list) {
+    let temp = checkLogin(uname, pwd, list);
     let isActive = checkActive(uname, list);
     if (isActive === true) {
       return false;
     }
-    let temp = checkLogin(uname, pwd, list);
     if (temp) {
       let idToken = shortid.generate();
       let token = new Token(temp, idToken);
@@ -94,7 +93,7 @@ function auth(socket, users, tokens) {
       });
     else
       socket.emit("login_failed", {
-        msg: "Login failed,please check your username, password or your accout was actived",
+        msg: "Login failed, check username, password",
       });
   });
   // socket.on("logout", () => {

@@ -111,20 +111,18 @@
       .task_bar {
         display: flex;
         justify-content: space-between;
-        padding: 15px 15px;
+        padding: 0 10;
       }
     </style>
   </head>
 
   <body>
     <div class="task_bar">
-      <div id="info_user">
+      <div id="info_user" style="padding-left: 10px">
         <i class="fas fa-user"></i>
         Wellcome
       </div>
-      <button id="button_logout">
-        <i class="fa-solid fa-right-from-bracket"></i>Logout
-      </button>
+      <div><i class="fa fa-logout"></i>Logout</div>
     </div>
     <div id="room_list">
       <b>Phòng</b>
@@ -288,16 +286,6 @@
             createPrivateChat(data.roomId, data.roomName);
           }
           insertMsg(data.roomId, data.username, data.message);
-        });
-        $("#button_logout").click(function () {
-          socket.emit("logout");
-        });
-        socket.on("logout_success", function (data) {
-          // localStorage.removeItem("token");
-          // localStorage.removeItem("id");
-          alert(data["msg"]);
-
-          window.history.back(); // chuyển hướng đường dẫn đến destination
         });
 
         //====================================

@@ -289,15 +289,13 @@
           }
           insertMsg(data.roomId, data.username, data.message);
         });
-        $("#button_logout").click(function () {
-          socket.emit("logout");
-        });
-        socket.on("logout_success", function (data) {
-          // localStorage.removeItem("token");
-          // localStorage.removeItem("id");
-          alert(data["msg"]);
 
-          window.history.back(); // chuyển hướng đường dẫn đến destination
+        socket.on("logout_success", function (data) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("id");
+          alert(data["msg"]);
+          let destination = window.location.href + "/"; // đường dẫn đến trang chat
+          window.location.href = destination; // chuyển hướng đường dẫn đến destination
         });
 
         //====================================

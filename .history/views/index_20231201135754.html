@@ -289,12 +289,10 @@
           }
           insertMsg(data.roomId, data.username, data.message);
         });
-        $("#button_logout").click(function () {
-          socket.emit("logout");
-        });
+
         socket.on("logout_success", function (data) {
-          // localStorage.removeItem("token");
-          // localStorage.removeItem("id");
+          localStorage.removeItem("token");
+          localStorage.removeItem("id");
           alert(data["msg"]);
 
           window.history.back(); // chuyển hướng đường dẫn đến destination

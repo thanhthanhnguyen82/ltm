@@ -111,7 +111,7 @@
       .task_bar {
         display: flex;
         justify-content: space-between;
-        padding: 15px 15px;
+        padding: 0 15px;
       }
     </style>
   </head>
@@ -288,16 +288,6 @@
             createPrivateChat(data.roomId, data.roomName);
           }
           insertMsg(data.roomId, data.username, data.message);
-        });
-        $("#button_logout").click(function () {
-          socket.emit("logout");
-        });
-        socket.on("logout_success", function (data) {
-          // localStorage.removeItem("token");
-          // localStorage.removeItem("id");
-          alert(data["msg"]);
-
-          window.history.back(); // chuyển hướng đường dẫn đến destination
         });
 
         //====================================

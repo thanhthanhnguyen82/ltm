@@ -174,7 +174,7 @@ const main = io.on("connection", (socket) => {
   // logout
   socket.on("logout", () => {
     socket.emit("logout_success", {
-      msg: "Do you want to log out?",
+      msg: "Logout successful",
     });
   });
   // receive clientId when an user logins

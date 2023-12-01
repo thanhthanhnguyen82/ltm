@@ -94,7 +94,7 @@ function auth(socket, users, tokens) {
       });
     else
       socket.emit("login_failed", {
-        msg: "Login failed,please check your username, password or your accout was actived",
+        msg: "Login failed, check username, password",
       });
   });
   // socket.on("logout", () => {

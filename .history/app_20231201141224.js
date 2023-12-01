@@ -173,8 +173,8 @@ const createPrivateRoom = (senderId, receiverId, senderName, receiverName) => {
 const main = io.on("connection", (socket) => {
   // logout
   socket.on("logout", () => {
-    socket.emit("logout_success", {
-      msg: "Do you want to log out?",
+    socket.emit("logout succeed", {
+      msg: "Logout successful",
     });
   });
   // receive clientId when an user logins

@@ -44,11 +44,11 @@ function auth(socket, users, tokens) {
   }
 
   function Login(uname, pwd, list) {
-    let isActive = checkActive(uname, list);
-    if (isActive === true) {
-      return false;
-    }
     let temp = checkLogin(uname, pwd, list);
+    // let isActive = checkActive(uname, list);
+    // if (isActive === true) {
+    //   return false;
+    // }
     if (temp) {
       let idToken = shortid.generate();
       let token = new Token(temp, idToken);
@@ -59,19 +59,18 @@ function auth(socket, users, tokens) {
     } else return false;
   }
 
-  // function Logout(token, lists) {
-  //   // Lọc danh sách token để tìm token cần đăng xuất
-  //   let indexToken = tokens.findIndex((t) => t.token === token);
+  function Logout(token) {
+    // Lọc danh sách token để tìm token cần đăng xuất
+    let index = tokens.findIndex((t) => t.token === token);
 
-  //   if (indexToken !== -1) {
-  //     // Xóa token khỏi danh sách tokens
-  //     tokens.splice(indexToken, 1);
-  //     lists[tokens.id]["isActive"] = false;
-  //     return true;
-  //   } else {
-  //     return false; // Token không hợp lệ hoặc đã được đăng xuất trước đó
-  //   }
-  // }
+    if (index !== -1) {
+      // Xóa token khỏi danh sách tokens
+      tokens.splice(index, 1);
+      return true;
+    } else {
+      return false; // Token không hợp lệ hoặc đã được đăng xuất trước đó
+    }
+  }
 
   socket.on("signup", (data) => {
     let stat = Register(data["uname"], data["pwd"], users);
@@ -94,22 +93,9 @@ function auth(socket, users, tokens) {
       });
     else
       socket.emit("login_failed", {
-        msg: "Login failed,please check your username, password or your accout was actived",
+        msg: "Login failed",
       });
   });
-  // socket.on("logout", () => {
-  //   let temp = Logout(tokens, users);
-
-  //   if (stat)
-  //     socket.emit("logout_success", {
-  //       msg: "logout succeed",
-  //       data: temp,
-  //     });
-  //   else
-  //     socket.emit("logout_failed", {
-  //       msg: "logout failed",
-  //     });
-  // });
 }
 
 exports.auth = auth;
