@@ -22,15 +22,15 @@ function auth(socket, users, tokens) {
     return false;
   }
 
-  function checkActive(uname, list) {
-    let n = list.length;
-    for (let i = 0; i < n; i++) {
-      if (list[i]["username"] === uname) {
-        if (list[i]["isActive"] === true) return true;
-      } // tk dang dc login
-    }
-    return false; // tk chưa login
-  }
+  // function checkActive(uname, list) {
+  //   let n = list.length;
+  //   for (let i = 0; i < n; i++) {
+  //     if (list[i]["username"] === uname) {
+  //       if (list[i]["isActive"] === true) return true;
+  //     } // tk dang dc login
+  //   }
+  //   return false; // tk chưa login
+  // }
 
   function Register(uname, pwd, list) {
     if (checkRegis(uname, list)) {
@@ -44,10 +44,10 @@ function auth(socket, users, tokens) {
   }
 
   function Login(uname, pwd, list) {
-    let isActive = checkActive(uname, list);
-    if (isActive === true) {
-      return false;
-    }
+    // let isActive = checkActive(uname, list);
+    // if (isActive === true) {
+    //   return false;
+    // }
     let temp = checkLogin(uname, pwd, list);
     if (temp) {
       let idToken = shortid.generate();

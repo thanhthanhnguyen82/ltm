@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>Socket.IO chat</title>
-    <!-- <script src="/icon-fontawesome/js/all.min.js"></script> -->
+    <script src="/icon-fontawesome/js/all.min.js"></script>
 
     <style>
       * {
@@ -289,13 +289,13 @@
         $("#button_logout").click(function () {
           socket.emit("logout", tokenClient, clientId);
         });
-        // socket.on("logout_success", function (data) {
-        //   localStorage.removeItem("tokenClient");
-        //   localStorage.removeItem("clientId");
-        //   alert(data["msg"]);
+        socket.on("logout_success", function (data) {
+          localStorage.removeItem("tokenClient");
+          localStorage.removeItem("clientId");
+          alert(data["msg"]);
 
-        //   window.history.back(); // chuyển hướng đường dẫn đến trang login
-        // });
+          window.history.back(); // chuyển hướng đường dẫn đến trang login
+        });
 
         //====================================
         // ADD EVENTS TO FORMS AND USERNAMES

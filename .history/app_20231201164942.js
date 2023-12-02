@@ -172,16 +172,14 @@ const createPrivateRoom = (senderId, receiverId, senderName, receiverName) => {
 //==============================================
 const main = io.on("connection", (socket) => {
   // logout
-  // socket.on("logout", (tokenClient, clientId) => {
-  //   // localStorage.removeItem("tokenClient");
-  //   // localStorage.removeItem("clientId");
-  //   client = user.find((ele) => ele.id === clientId);
-  //   client.isActive = false;
-  //   // alert(data["msg"]);
-  //   socket.emit("logout_success", {
-  //     msg: "Do you want to log out?",
-  //   });
-  // });
+  socket.on("logout", () => {
+    // localStorage.removeItem("token");
+    // localStorage.removeItem("id", data["data"]["id"]);
+    alert(data["msg"]);
+    socket.emit("logout_success", {
+      msg: "Do you want to log out?",
+    });
+  });
   // receive clientId when an user logins
   socket.on("send clientId", (id) => {
     // new code to fix room msg events
@@ -322,7 +320,7 @@ const main = io.on("connection", (socket) => {
         roomName: roomList[roomId],
       });
     } else {
-      socket.emit("Join Error", "You are already in the room!");
+      socket.emit("vào phòng lỗi", "Bạn đã ở trong phòng rồi!");
     }
   });
 
@@ -341,17 +339,17 @@ const main = io.on("connection", (socket) => {
       // console.log(io.sockets.adapter.rooms[roomId]);;
       //============================
       // emit a msg back to the sender
-      socket.emit("left room", {
+      socket.emit("leave room", {
         clientName: socket.username,
         roomId: roomId,
         roomName: roomList[roomId],
       });
     } else {
-      socket.emit("leave room error", "you are not in the room!");
+      socket.emit("Rời phòng lỗi", "bạn không ở trong phòng!");
     }
   });
 
-  socket.on("delete room", (clientId, roomId) => {
+  socket.on("Xóa phòng", (clientId, roomId) => {
     let roomName = roomList[roomId];
     try {
       deleteRoom(clientId, roomId);
@@ -375,11 +373,11 @@ const main = io.on("connection", (socket) => {
       // console.log(io.sockets.adapter.rooms[roomId]);
       //============================
       // emit to all clients new roomList -> update room list
-      io.sockets.emit("deleted room", roomId, roomName, roomList);
+      io.sockets.emit("delete room", roomId, roomName, roomList);
     } catch (err) {
       console.log(err);
       // emit a msg back to the sender
-      socket.emit("delete rom error", err.message);
+      socket.emit("Xóa phòng lõi", err.message);
     }
   });
 

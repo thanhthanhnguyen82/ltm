@@ -172,16 +172,16 @@ const createPrivateRoom = (senderId, receiverId, senderName, receiverName) => {
 //==============================================
 const main = io.on("connection", (socket) => {
   // logout
-  // socket.on("logout", (tokenClient, clientId) => {
-  //   // localStorage.removeItem("tokenClient");
-  //   // localStorage.removeItem("clientId");
-  //   client = user.find((ele) => ele.id === clientId);
-  //   client.isActive = false;
-  //   // alert(data["msg"]);
-  //   socket.emit("logout_success", {
-  //     msg: "Do you want to log out?",
-  //   });
-  // });
+  socket.on("logout", (tokenClient, clientId) => {
+    // localStorage.removeItem("tokenClient");
+    // localStorage.removeItem("clientId");
+    client = user.find((ele) => ele.id === clientId);
+    client.isActive = false;
+    // alert(data["msg"]);
+    socket.emit("logout_success", {
+      msg: "Do you want to log out?",
+    });
+  });
   // receive clientId when an user logins
   socket.on("send clientId", (id) => {
     // new code to fix room msg events

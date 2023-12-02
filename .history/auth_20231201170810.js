@@ -44,10 +44,10 @@ function auth(socket, users, tokens) {
   }
 
   function Login(uname, pwd, list) {
-    let isActive = checkActive(uname, list);
-    if (isActive === true) {
-      return false;
-    }
+    // let isActive = checkActive(uname, list);
+    // if (isActive === true) {
+    //   return false;
+    // }
     let temp = checkLogin(uname, pwd, list);
     if (temp) {
       let idToken = shortid.generate();

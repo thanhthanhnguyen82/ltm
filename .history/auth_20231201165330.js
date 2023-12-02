@@ -15,7 +15,7 @@ function auth(socket, users, tokens) {
     let n = list.length;
     for (let i = 0; i < n; i++) {
       if (list[i]["username"] === name && list[i]["password"] === pwd) {
-        // list[i]["isActive"] = true;
+        list[i]["isActive"] = true;
         return list[i]["id"];
       }
     }

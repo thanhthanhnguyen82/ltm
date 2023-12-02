@@ -3,7 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <title>Socket.IO chat</title>
-    <!-- <script src="/icon-fontawesome/js/all.min.js"></script> -->
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+      integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm"
+      crossorigin="anonymous"
+    />
 
     <style>
       * {
@@ -114,11 +119,11 @@
   <body>
     <div class="task_bar">
       <div id="info_user">
-        <i class="fa-duotone fa-user"></i>
+        <i class="fas fa-user"></i>
         Wellcome
       </div>
       <button id="button_logout">
-        <i class="fa-duotone fa-right-from-bracket"></i>Logout
+        <i class="fa-solid fa-right-from-bracket"></i>Logout
       </button>
     </div>
     <div id="room_list">
@@ -167,8 +172,6 @@
         //===================================
         // after redirecting from login page -> get clientId and send to server
         let clientId = localStorage.getItem("id");
-        let tokenClient = localStorage.getItem("token");
-
         socket.emit("send clientId", clientId);
 
         socket.on("connect", () => {
@@ -232,7 +235,7 @@
         });
 
         // remove the room when an user leaves
-        socket.on("left room", (data) => {
+        socket.on("leave room", (data) => {
           $(`#${data.roomId}_box`).remove();
           $(`#main_msg`).append(
             `<li><em> ${data.clientName} </em> leaved ${data.roomName}!</li>`
@@ -244,7 +247,7 @@
         });
 
         // remove the room and update room list after deleting the room in server data
-        socket.on("deleted room", (roomId, roomName, roomList) => {
+        socket.on("delete room", (roomId, roomName, roomList) => {
           $(`#${roomId}_box`).remove();
           updateRoomList(roomList);
           $("#main_msg").append(`<li><em> ${roomName} </em> is deleted !</li>`);
@@ -287,15 +290,15 @@
           insertMsg(data.roomId, data.username, data.message);
         });
         $("#button_logout").click(function () {
-          socket.emit("logout", tokenClient, clientId);
+          socket.emit("logout", clientId);
         });
-        // socket.on("logout_success", function (data) {
-        //   localStorage.removeItem("tokenClient");
-        //   localStorage.removeItem("clientId");
-        //   alert(data["msg"]);
+        socket.on("logout_success", function (data) {
+          // localStorage.removeItem("token");
+          // localStorage.removeItem("id");
+          alert(data["msg"]);
 
-        //   window.history.back(); // chuyển hướng đường dẫn đến trang login
-        // });
+          window.history.back(); // chuyển hướng đường dẫn đến trang login
+        });
 
         //====================================
         // ADD EVENTS TO FORMS AND USERNAMES
