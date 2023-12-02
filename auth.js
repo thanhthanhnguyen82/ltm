@@ -1,3 +1,5 @@
+// auth.js
+
 const shortid = require("shortid");
 const User = require("./user.js").User;
 const Token = require("./user.js").Token;
@@ -27,9 +29,9 @@ function auth(socket, users, tokens) {
     for (let i = 0; i < n; i++) {
       if (list[i]["username"] === uname) {
         if (list[i]["isActive"] === true) return true;
-      } // tk dang dc login
+      }
     }
-    return false; // tk chưa login
+    return false;
   }
 
   function Register(uname, pwd, list) {
@@ -70,7 +72,6 @@ function auth(socket, users, tokens) {
         msg: "Register failed",
       });
   });
-
   socket.on("login", (data) => {
     let temp = Login(data["uname"], data["pwd"], users);
     if (temp)
@@ -80,9 +81,8 @@ function auth(socket, users, tokens) {
       });
     else
       socket.emit("login_failed", {
-        msg: "Login failed,please check your username, password or your accout was actived",
+        msg: "Login failed, please check your username, password, or your account was already active",
       });
   });
 }
-
 exports.auth = auth;
