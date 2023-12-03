@@ -109,10 +109,10 @@
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script>
       $(document).ready(function () {
-        var socket = io();
+        var socket = io("http://localhost:3000");
 
         $("#login").click(function () {
           let uname = $("#uname").val();
@@ -143,8 +143,8 @@
         });
 
         socket.on("login_succeed", function (data) {
-          localStorage.setItem("token", data["data"]["token"]);
-          localStorage.setItem("id", data["data"]["id"]);
+          localStorage.setItem("tokenClient", data["data"]["token"]);
+          localStorage.setItem("clientId", data["data"]["id"]);
           alert(data["msg"]);
           let destination = window.location.href + "chat"; // go to page chat
           window.location.href = "/chat"; // go to destination

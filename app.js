@@ -172,16 +172,16 @@ const createPrivateRoom = (senderId, receiverId, senderName, receiverName) => {
 //==============================================
 const main = io.on("connection", (socket) => {
   // logout
-  // socket.on("logout", (tokenClient, clientId) => {
-  //   // localStorage.removeItem("tokenClient");
-  //   // localStorage.removeItem("clientId");
-  //   client = user.find((ele) => ele.id === clientId);
-  //   client.isActive = false;
-  //   // alert(data["msg"]);
-  //   socket.emit("logout_success", {
-  //     msg: "Do you want to log out?",
-  //   });
-  // });
+  socket.on("logout", (tokenClient, clientId) => {
+    // localStorage.removeItem("tokenClient");
+    // localStorage.removeItem("clientId");
+    client = user.find((ele) => ele.id === clientId);
+    client.isActive = false;
+    // alert(data["msg"]);
+    socket.emit("logout_success", {
+      msg: "Do you want to log out?",
+    });
+  });
   // receive clientId when an user logins
   socket.on("send clientId", (id) => {
     // new code to fix room msg events
@@ -191,11 +191,17 @@ const main = io.on("connection", (socket) => {
     let clientId = id;
     // find the client info with clientId
     let connectClient = user.find((ele) => ele.id === clientId);
-    // store the current socket.id in the user obj to be used for private msg
-    connectClient.socketId = socket.id;
-    socket.username = connectClient.username;
-    io.to(socket.id).emit("reconnect", connectClient, roomList);
-    io.sockets.emit("user connect", connectClient, roomList, user);
+
+    if (connectClient == undefined) {
+      io.sockets.emit("login aganst");
+    } else {
+      // store the current socket.id in the user obj to be used for private msg
+      connectClient.socketId = socket.id;
+
+      socket.username = connectClient.username;
+      io.to(socket.id).emit("reconnect", connectClient, roomList);
+      io.sockets.emit("user connect", connectClient, roomList, user);
+    }
   });
   // socket.on("client_connect", (id) => {
   //   let clientId = id;

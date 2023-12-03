@@ -158,24 +158,27 @@
 
     <div class="private_container"></div>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script>
       $(function () {
         // connect to socket.io
-        const socket = io();
+        const socket = io("http://localhost:3000");
         //===================================
         // after redirecting from login page -> get clientId and send to server
-        let clientId = localStorage.getItem("id");
-        // let tokenClient = localStorage.getItem("token");
-
+        let clientId = localStorage.getItem("clientId");
+        let tokenClient = localStorage.getItem("tokenClient");
+        console.log(clientId);
         socket.emit("send clientId", clientId);
 
         // socket.emit("client_connect", clientId);
         // socket.on("connect", () => {
         //   $("#info_user").append(`<span> ${connectClient.username}</span>`);
         // });
-
+        socket.on("login aganst",()=>{
+          alert("login aganst")
+          window.location.href = "/";
+        })
         socket.on("user connect", (connectClient, roomList, user) => {
           updateRoomList(roomList);
           updateUserList(user);
@@ -278,16 +281,16 @@
           insertMsg(data.roomId, data.username, data.message);
         });
 
-        // $("#button_logout").click(function () {
-        //   socket.emit("logout", tokenClient, clientId);
-        // });
-        // socket.on("logout_success", function (data) {
-        //   localStorage.removeItem("tokenClient");
-        //   localStorage.removeItem("clientId");
-        //   alert(data["msg"]);
+        $("#button_logout").click(function () {
+          socket.emit("logout", tokenClient, clientId);
+        });
+        socket.on("logout_success", function (data) {
+          localStorage.removeItem("tokenClient");
+          localStorage.removeItem("clientId");
+          alert(data["msg"]);
 
-        //   window.history.back(); // chuyển hướng đường dẫn đến trang login
-        // });
+          window.history.back(); // chuyển hướng đường dẫn đến trang login
+        });
 
         //====================================
         // ADD EVENTS TO FORMS AND USERNAMES
