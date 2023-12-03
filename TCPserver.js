@@ -1,63 +1,63 @@
 const net = require("net");
-const socketIO = require("socket.io");
 const fs = require("fs");
 
-// Xử lý yêu cầu HTTP
-function handleRequest(request) {
-  // Đọc nội dung từ các tệp HTML, CSS và JavaScript
-  const htmlContent = fs.readFileSync("views/login.html", "utf8");
-  // Tạo phản hồi HTTP chứa nội dung các tệp
-  const response = `HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n${htmlContent}`;
-  return response;
+function handleRequest(url, socket) {
+  let filePath;
+  if (url === "/") {
+    filePath = "views/login.html";
+  } else if (url === "/chat") {
+    filePath = "views/index.html";
+  } else {
+    filePath = null;
+  }
+
+  if (filePath) {
+    const readableStream = fs.createReadStream(filePath, "utf8");
+
+    // Phản hồi HTTP 200 OK
+    socket.write("HTTP/1.1 200 OK\r\n");
+
+    // Phần tiêu đề HTTP Content-Type
+    socket.write("Content-Type: text/html\r\n");
+
+    // Phần tiêu đề HTTP Content-Length (độ dài của nội dung)
+    readableStream.on("data", (chunk) => {
+      socket.write(`Content-Length: ${Buffer.from(chunk).length}\r\n\r\n`);
+    });
+
+    // Pipe dữ liệu từ ReadableStream đến socket
+    readableStream.pipe(socket, { end: true });
+  } else {
+    // Phản hồi HTTP 404 Not Found
+    socket.write("HTTP/1.1 404 Not Found\r\n\r\nPage not found");
+    socket.end();
+  }
 }
-// Xử lý yêu cầu HTTP
-function handleRequestChat(request) {
-  // Đọc nội dung từ các tệp HTML, CSS và JavaScript
-  const htmlContent = fs.readFileSync("views/index.html", "utf8");
-  // Tạo phản hồi HTTP chứa nội dung các tệp
-  const response = `HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n${htmlContent}`;
-  return response;
-}
-// Tạo server sử dụng net
+
 const server = net.createServer((socket) => {
   console.log("Client connected.");
-  // Đọc dữ liệu từ khách hàng
+
   socket.on("data", (data) => {
     const request = data.toString();
-    // Xử lý yêu cầu
     const tokens = request.split(" ");
     const method = tokens[0];
     const url = tokens[1];
-    console.log(url);
+
     switch (method.toUpperCase()) {
       case "GET":
-        if (url == "/") {
-          const response = handleRequest(request);
-          if (!response) {
-            socket.write("HTTP/1.1 404 Not Found\r\n\r\nPage not found");
-          }
-          socket.write(response);
-        }
-        if (url == "/chat") {
-          const response = handleRequestChat(request);
-          if (!response) {
-            socket.write("HTTP/1.1 404 Not Found\r\n\r\nPage not found");
-          }
-          socket.write(response);
-        }
-
+        handleRequest(url, socket);
+        break;
       default:
         socket.end();
         break;
     }
   });
 
-  // Xử lý khi kết nối bị đóng
   socket.on("end", () => {
     console.log("Client disconnected.");
   });
 });
-// Khởi động server net
+
 server.listen(3001, () => {
-  console.log("TCP server listening on port 3000");
+  console.log("TCP server listening on port 3001");
 });
