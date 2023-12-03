@@ -197,6 +197,11 @@ const main = io.on("connection", (socket) => {
     io.to(socket.id).emit("reconnect", connectClient, roomList);
     io.sockets.emit("user connect", connectClient, roomList, user);
   });
+  // socket.on("client_connect", (id) => {
+  //   let clientId = id;
+  //   let connectClient = user.find((ele) => ele.id === clientId);
+  //   socket.emit("connect", connectClient);
+  // });
   //=================================
   // socket.on('disconnect', () => {
   //     //
@@ -297,7 +302,7 @@ const main = io.on("connection", (socket) => {
       //============================
     } catch (err) {
       console.log(err);
-      socket.emit("Tạo phòng lỗi", socket.username, err);
+      socket.emit("create room error", socket.username, err);
     }
   });
 
@@ -322,7 +327,7 @@ const main = io.on("connection", (socket) => {
         roomName: roomList[roomId],
       });
     } else {
-      socket.emit("Join Error", "You are already in the room!");
+      socket.emit("join room error", "You are already in the room!");
     }
   });
 
@@ -379,7 +384,7 @@ const main = io.on("connection", (socket) => {
     } catch (err) {
       console.log(err);
       // emit a msg back to the sender
-      socket.emit("delete rom error", err.message);
+      socket.emit("delete room error", err.message);
     }
   });
 

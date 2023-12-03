@@ -167,31 +167,22 @@
         //===================================
         // after redirecting from login page -> get clientId and send to server
         let clientId = localStorage.getItem("id");
-        let tokenClient = localStorage.getItem("token");
+        // let tokenClient = localStorage.getItem("token");
 
         socket.emit("send clientId", clientId);
 
-        socket.on("connect", () => {
-          // display in browser's title and on pages
-          // $('#main_msg').append(`<li> You connected!</li>`);
-        });
+        // socket.emit("client_connect", clientId);
+        // socket.on("connect", () => {
+        //   $("#info_user").append(`<span> ${connectClient.username}</span>`);
+        // });
 
         socket.on("user connect", (connectClient, roomList, user) => {
           updateRoomList(roomList);
           updateUserList(user);
           $("#main_msg").append(
-            `<li> ${connectClient.username} đã kết nối với phòng trò chuyện </li>`
+            `<li> ${connectClient.username} connected to the chat room</li>`
           );
         });
-        socket.on("user connect", (connectClient, roomList, user) => {
-          updateRoomList(roomList);
-          updateUserList(user);
-          $("#info_user").append(
-            `
-            <span> ${connectClient.username}</span>`
-          );
-        });
-
         socket.on("reconnect", (connectClient, roomList) => {
           console.log("reconnect");
           connectClient.room.forEach((roomId) =>
@@ -286,9 +277,10 @@
           }
           insertMsg(data.roomId, data.username, data.message);
         });
-        $("#button_logout").click(function () {
-          socket.emit("logout", tokenClient, clientId);
-        });
+
+        // $("#button_logout").click(function () {
+        //   socket.emit("logout", tokenClient, clientId);
+        // });
         // socket.on("logout_success", function (data) {
         //   localStorage.removeItem("tokenClient");
         //   localStorage.removeItem("clientId");

@@ -146,8 +146,8 @@
           localStorage.setItem("token", data["data"]["token"]);
           localStorage.setItem("id", data["data"]["id"]);
           alert(data["msg"]);
-          let destination = window.location.href + "chat"; // đường dẫn đến trang chat
-          window.location.href = "/chat"; // chuyển hướng đường dẫn đến destination
+          let destination = window.location.href + "chat"; // go to page chat
+          window.location.href = "/chat"; // go to destination
         });
 
         socket.on("login_failed", function (data) {
